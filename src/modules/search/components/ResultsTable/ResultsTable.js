@@ -1,8 +1,10 @@
 import React from "react";
+import { v4 as uuid } from "uuid";
+import TableFilter from "./TableFilter/TableFilter";
 import { convertAtomDate } from "../../../../helpers/index";
 import classes from "./ResultsTable.module.scss";
 
-const ResultsTable = ({ repoData }) => {
+const ResultsTable = ({ repoData, filters, sortData }) => {
   return (
     <div className={classes.tableWrapper}>
       {repoData && repoData.length > 0 ? (
@@ -11,6 +13,20 @@ const ResultsTable = ({ repoData }) => {
             data-test="search-results-table"
             className={classes.resultsTable}
           >
+            <thead>
+              <tr>
+                {filters.map((filter, index) => {
+                  return (
+                    <TableFilter
+                      key={uuid()}
+                      index={index}
+                      filter={filter}
+                      sortData={sortData}
+                    />
+                  );
+                })}
+              </tr>
+            </thead>
             <tbody>
               {repoData.map((item) => {
                 return (

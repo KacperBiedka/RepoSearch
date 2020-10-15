@@ -8,6 +8,7 @@ import StatusHero from "../../components/StatusHero/StatusHero";
 import ResultsTable from "../../components/ResultsTable/ResultsTable";
 import { useDispatch } from "react-redux";
 import { updateSearchError } from "../../../../actions";
+import { sortByField } from "../../../../helpers/index";
 import classes from "./SearchResults.module.scss";
 
 const SearchResults = ({ history }) => {
@@ -16,6 +17,32 @@ const SearchResults = ({ history }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [lastSearch, setLastSearch] = useState("");
+  const [filters, setFilters] = useState([
+    {
+      name: "Name",
+      field: "name",
+      order: "asc",
+      active: true,
+    },
+    {
+      name: "Owner",
+      field: "owner",
+      order: "asc",
+      active: false,
+    },
+    {
+      name: "Stars",
+      field: "stars",
+      order: "asc",
+      active: false,
+    },
+    {
+      name: "Created at",
+      field: "created_at",
+      order: "asc",
+      active: false,
+    },
+  ]);
 
   const dispatch = useDispatch();
 
@@ -55,9 +82,52 @@ const SearchResults = ({ history }) => {
             id: item.id,
           };
         });
+        const activeFilter = filters.find((filter) => filter.active);
+        displayData = sortByField(
+          displayData,
+          activeFilter.field,
+          activeFilter.order
+        );
+        updateActiveFilter(activeFilter.field, activeFilter.order);
       }
     }
     setSearchResults(displayData);
+  };
+
+  const sortData = (index) => {
+    const updatedFilters = [...filters];
+    const filter = updatedFilters[index];
+    const sortedArray = sortByField(searchResults, filter.field, filter.order);
+    setSearchResults([...sortedArray]);
+    updatedFilters.map((filter) => {
+      return (filter.active = false);
+    });
+    setFilters(updatedFilters);
+    if (filter.order === "asc") {
+      filter.order = "desc";
+    } else {
+      filter.order = "asc";
+    }
+    filter.active = true;
+    updatedFilters[index] = filter;
+  };
+
+  const updateActiveFilter = (field, order) => {
+    const updatedFilters = [...filters];
+    const activeIndex = filters.findIndex((filter) => filter.field === field);
+    const newFilter = updatedFilters[activeIndex];
+    newFilter.order = order;
+    updatedFilters.map((filter) => {
+      return (filter.active = false);
+    });
+    newFilter.active = true;
+    if (order === "asc") {
+      newFilter.order = "desc";
+    } else {
+      newFilter.order = "asc";
+    }
+    updatedFilters[activeIndex] = newFilter;
+    setFilters(updatedFilters);
   };
 
   const addSearchEntry = (query) => {
@@ -73,7 +143,15 @@ const SearchResults = ({ history }) => {
         value={searchQuery}
         changeCallback={(keyword) => setSearchQuery(keyword)}
       />
-      {isLoading ? <Loader /> : <ResultsTable repoData={searchResults} />}
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <ResultsTable
+          repoData={searchResults}
+          filters={filters}
+          sortData={sortData}
+        />
+      )}
     </div>
   );
 };
