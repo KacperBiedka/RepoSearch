@@ -1,4 +1,5 @@
 import React from "react";
+import { convertAtomDate } from "../../../../helpers/index";
 import classes from "./ResultsTable.module.scss";
 
 const ResultsTable = ({ repoData }) => {
@@ -17,7 +18,7 @@ const ResultsTable = ({ repoData }) => {
                     <td>{item.name}</td>
                     <td>{item.owner}</td>
                     <td>{item.stars}</td>
-                    <td>{item.created_at}</td>
+                    <td>{convertAtomDate(item.created_at)}</td>
                   </tr>
                 );
               })}
