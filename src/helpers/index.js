@@ -1,6 +1,6 @@
 /**
  * Accepts the date in atom format and returns display string (DD-MM-YYYY)
- * @param {Atom format Date} date
+ * @param {Date in atom format} date
  */
 export const convertAtomDate = (date) => {
   let convertedDate = new Date(date);
@@ -49,4 +49,29 @@ export const sortByField = (array, field, order) => {
     return 0;
   };
   return array.sort(compareValues);
+};
+
+/**
+ * Small helper function for retrieving the values from local storage
+ * checks if the value is present, parses it and passes it as an arugment in a callback function
+ * @param {String} name
+ * @param {Function} callback
+ */
+export const getCacheValue = (name, callback) => {
+  const cacheField = localStorage.getItem(name);
+  if (cacheField) {
+    const parsedValue = JSON.parse(cacheField);
+    callback(parsedValue);
+  }
+};
+
+/**
+ * Small helper function for updating the values in the cache
+ * assigns converted value at a cache field specified in the name property
+ * @param {string} name
+ * @param {*} value
+ */
+export const updateCacheValue = (name, value) => {
+  const cacheValue = JSON.stringify(value);
+  localStorage.setItem(name, cacheValue);
 };

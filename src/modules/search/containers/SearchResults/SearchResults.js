@@ -8,7 +8,11 @@ import StatusHero from "../../components/StatusHero/StatusHero";
 import ResultsTable from "../../components/ResultsTable/ResultsTable";
 import { useDispatch } from "react-redux";
 import { updateSearchError } from "../../../../actions";
-import { sortByField } from "../../../../helpers/index";
+import {
+  sortByField,
+  getCacheValue,
+  updateCacheValue,
+} from "../../../../helpers/index";
 import classes from "./SearchResults.module.scss";
 
 const SearchResults = ({ history }) => {
@@ -50,23 +54,40 @@ const SearchResults = ({ history }) => {
 
   const dispatch = useDispatch();
 
-  const fetchData = async () => {
+  const getCachedValues = () => {
+    getCacheValue("perPage", (number) => setPerPage(number));
+    getCacheValue("prevResults", (results) => setPrevSearchResults(results));
+    getCacheValue("currentPage", (page) => setCurrentPage(page));
+  };
+
+  useEffect(() => {
+    getCachedValues();
+  }, []);
+
+  const fetchData = async (cachedResults = null) => {
     setIsLoading(true);
-    const githubApi = new GithubApi(
-      "https://api.github.com/search/repositories?q="
-    );
-    const results = await githubApi.getSearchResults(searchQuery);
-    if (results.data) {
-      addSearchEntry(searchQuery);
+    if (cachedResults) {
+      dispatch(updateSearchError(null));
+      addSearchEntry(searchQuery, cachedResults);
+      extractListData(cachedResults);
+    } else {
+      const githubApi = new GithubApi(
+        "https://api.github.com/search/repositories?q="
+      );
+      const results = await githubApi.getSearchResults(searchQuery);
+      if (results.data) {
+        addSearchEntry(searchQuery, results.data);
+      }
+      dispatch(updateSearchError(results.error));
+      extractListData(results.data);
+      updateCurrentPage(1);
     }
-    dispatch(updateSearchError(results.error));
-    extractListData(results.data);
-    updateCurrentPage(1);
     setIsLoading(false);
   };
 
   const updateCurrentPage = (number) => {
     setCurrentPage(number);
+    updateCacheValue("currentPage", number);
   };
 
   const updatePaginationNumber = (number) => {
@@ -76,7 +97,14 @@ const SearchResults = ({ history }) => {
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (searchQuery) {
-        fetchData();
+        const cachedResult = prevSearchResults.find(
+          (result) => result.query === searchQuery
+        );
+        if (cachedResult) {
+          fetchData(cachedResult.data);
+        } else {
+          fetchData();
+        }
       }
     }, 1000);
     return () => clearTimeout(delayDebounce);
@@ -156,6 +184,7 @@ const SearchResults = ({ history }) => {
 
   const addSearchEntry = (query, data) => {
     setLastSearch(query);
+    updateCacheValue("lastSearch", query);
     const prevResults = [...prevSearchResults];
     setPrevSearchResults(prevResults);
     const matchingField = prevResults.find((result) => result.query === query);
@@ -166,6 +195,7 @@ const SearchResults = ({ history }) => {
       });
     }
     setPrevSearchResults(prevResults);
+    updateCacheValue("prevResults", prevResults);
   };
 
   useEffect(() => {
@@ -173,6 +203,7 @@ const SearchResults = ({ history }) => {
       const parsedNumber = parseInt(perPage);
       if (parsedNumber > 0) {
         calculatePaginationNumbers(searchResults, parsedNumber);
+        updateCacheValue("perPage", parsedNumber);
         if (searchResults) {
           if (Math.ceil(searchResults.length / parsedNumber) < currentPage) {
             updateCurrentPage(1);
