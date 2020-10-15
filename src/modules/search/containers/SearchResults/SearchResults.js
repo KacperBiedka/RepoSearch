@@ -5,6 +5,7 @@ import GithubApi from "../../../../api/GithubApi";
 import Input from "../../../../components/Input/Input";
 import Loader from "../../../../components/Loader/Loader";
 import StatusHero from "../../components/StatusHero/StatusHero";
+import ResultsTable from "../../components/ResultsTable/ResultsTable";
 import { useDispatch } from "react-redux";
 import { updateSearchError } from "../../../../actions";
 import classes from "./SearchResults.module.scss";
@@ -72,7 +73,7 @@ const SearchResults = ({ history }) => {
         value={searchQuery}
         changeCallback={(keyword) => setSearchQuery(keyword)}
       />
-      {isLoading ? <Loader /> : null}
+      {isLoading ? <Loader /> : <ResultsTable repoData={searchResults} />}
     </div>
   );
 };
