@@ -1,4 +1,4 @@
-import SearchPage from "../modules/search/SearchPage/SearchPage";
+import SearchPage from "./modules/search/SearchPage/SearchPage";
 
 const routes = [
   {
