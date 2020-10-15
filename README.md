@@ -28,8 +28,11 @@ I've added a custom react hook for extracting the data from the url search param
 ### Local pagination
 Number of pages is calculated based on the total number of entries and number of entries per page. The row number used for table display is separated from the value synced with TableOptions input to provide a better user experience (not limiting the user from passing empty values and handling only the valid cases). 
 
-## Redux values
-In this case I've only passed the error message as the value to the global store, it's the main value that could be used to display dynamic content in different modules. For values like search results or search query a local state or a context provider seems like a better option since these values would most likely not affect the display of different modules.
+## Redux store
+In this case I've only passed the error message as the value to the global store, it's the main value that could be used to display dynamic content in different modules. For values like search results or search query a local state or a context provider seems like a better option since these values would most likely not be used in different modules.
+
+## Tests
+For this application I've integrated some basic unit test testing selector assignments, numbers of displayed elements, input value synchronisation and property updates. The test check both cases: when the data is not passed or an error occured and when the data is valid. For more optimal test structure an integration test should be added for the SearchResults component to test data fetching and its affect on the display of nested elements.
 
 ## Available Scripts
 
