@@ -17,6 +17,10 @@ const SearchResults = ({ history }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [lastSearch, setLastSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginationNumbers, setPaginationNumbers] = useState([]);
+  const [perPage, setPerPage] = useState(10);
+  const [rowNumber, setRowNumber] = useState(10);
   const [filters, setFilters] = useState([
     {
       name: "Name",
@@ -57,7 +61,16 @@ const SearchResults = ({ history }) => {
     }
     dispatch(updateSearchError(results.error));
     extractListData(results.data);
+    updateCurrentPage(1);
     setIsLoading(false);
+  };
+
+  const updateCurrentPage = (number) => {
+    setCurrentPage(number);
+  };
+
+  const updatePaginationNumber = (number) => {
+    setPerPage(number);
   };
 
   useEffect(() => {
@@ -92,6 +105,7 @@ const SearchResults = ({ history }) => {
       }
     }
     setSearchResults(displayData);
+    calculatePaginationNumbers(displayData, perPage);
   };
 
   const sortData = (index) => {
@@ -130,11 +144,45 @@ const SearchResults = ({ history }) => {
     setFilters(updatedFilters);
   };
 
-  const addSearchEntry = (query) => {
+  const calculatePaginationNumbers = (array, perPageNumber) => {
+    const newPagination = [];
+    if (array) {
+      for (let i = 1; i <= Math.ceil(array.length / perPageNumber); i++) {
+        newPagination.push(i);
+      }
+      setPaginationNumbers(newPagination);
+    }
+  };
+
+  const addSearchEntry = (query, data) => {
     setLastSearch(query);
     const prevResults = [...prevSearchResults];
     setPrevSearchResults(prevResults);
+    const matchingField = prevResults.find((result) => result.query === query);
+    if (!matchingField) {
+      prevResults.push({
+        query,
+        data,
+      });
+    }
+    setPrevSearchResults(prevResults);
   };
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      const parsedNumber = parseInt(perPage);
+      if (parsedNumber > 0) {
+        calculatePaginationNumbers(searchResults, parsedNumber);
+        if (searchResults) {
+          if (Math.ceil(searchResults.length / parsedNumber) < currentPage) {
+            updateCurrentPage(1);
+          }
+        }
+        setRowNumber(parsedNumber);
+      }
+    }, 1000);
+    return () => clearTimeout(delayDebounce);
+  }, [perPage]);
 
   return (
     <div data-test="search-results" className={classes.searchResults}>
@@ -150,6 +198,12 @@ const SearchResults = ({ history }) => {
           repoData={searchResults}
           filters={filters}
           sortData={sortData}
+          perPage={perPage}
+          rowNumber={rowNumber}
+          currentPage={currentPage}
+          perPageCallback={updatePaginationNumber}
+          paginationNumbers={paginationNumbers}
+          updateCurrentPage={updateCurrentPage}
         />
       )}
     </div>
