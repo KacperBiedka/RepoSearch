@@ -1,13 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { withRouter } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { updateSearchError } from "../../../../actions";
 import GithubApi from "../../../../api/GithubApi";
 import Input from "../../../../components/Input/Input";
 import Loader from "../../../../components/Loader/Loader";
 import StatusHero from "../../components/StatusHero/StatusHero";
 import ResultsTable from "../../components/ResultsTable/ResultsTable";
-import { useDispatch } from "react-redux";
-import { updateSearchError } from "../../../../actions";
+import useUrlSearchParams from "../../../../hooks/useUrlSearchParams";
 import {
   sortByField,
   getCacheValue,
@@ -54,14 +55,30 @@ const SearchResults = ({ history }) => {
 
   const dispatch = useDispatch();
 
+  // Retrieve search param values with useLocation()
+  const urlQuery = useUrlSearchParams("query");
+  const urlField = useUrlSearchParams("field");
+  const urlOrder = useUrlSearchParams("order");
+
   const getCachedValues = () => {
     getCacheValue("perPage", (number) => setPerPage(number));
     getCacheValue("prevResults", (results) => setPrevSearchResults(results));
     getCacheValue("currentPage", (page) => setCurrentPage(page));
   };
 
+  const retrieveUrlValues = () => {
+    if (urlQuery) {
+      setSearchQuery(urlQuery);
+      setIsLoading(true);
+    }
+    if (urlField && urlOrder) {
+      updateActiveFilter(urlField, urlOrder);
+    }
+  };
+
   useEffect(() => {
     getCachedValues();
+    retrieveUrlValues();
   }, []);
 
   const fetchData = async (cachedResults = null) => {
@@ -150,6 +167,10 @@ const SearchResults = ({ history }) => {
     } else {
       filter.order = "asc";
     }
+    history.push({
+      pathname: "/",
+      search: `?query=${searchQuery}&field=${filter.field}&order=${filter.order}`,
+    });
     filter.active = true;
     updatedFilters[index] = filter;
   };
@@ -185,6 +206,11 @@ const SearchResults = ({ history }) => {
   const addSearchEntry = (query, data) => {
     setLastSearch(query);
     updateCacheValue("lastSearch", query);
+    const activeFilter = filters.find((filter) => filter.active);
+    history.push({
+      pathname: "/",
+      search: `?query=${query}&field=${activeFilter.field}&order=${activeFilter.order}`,
+    });
     const prevResults = [...prevSearchResults];
     setPrevSearchResults(prevResults);
     const matchingField = prevResults.find((result) => result.query === query);
